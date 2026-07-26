@@ -1,0 +1,40 @@
+services:
+  backend:
+    build: ./backend
+    container_name: credvault-backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: sqlite:////data/app.db
+      SECRET_KEY: ${SECRET_KEY}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-480}
+      DEFAULT_SUPERADMIN_USERNAME: ${DEFAULT_SUPERADMIN_USERNAME:-superadmin}
+      DEFAULT_SUPERADMIN_PASSWORD: ${DEFAULT_SUPERADMIN_PASSWORD:-Passwords1807*}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME}
+    volumes:
+      - credvault_data:/data
+    networks:
+      - credvault_net
+    # Portni hostga chiqarmaymiz — faqat frontend (nginx) orqali ichkaridan kiriladi.
+    # Sinov uchun to'g'ridan-to'g'ri kirish kerak bo'lsa, quyidagi qatorni oching:
+    # ports:
+    #   - "8000:8000"
+
+  frontend:
+    build: ./frontend
+    container_name: credvault-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "8090:80"
+    networks:
+      - credvault_net
+
+networks:
+  credvault_net:
+    driver: bridge
+
+volumes:
+  credvault_data:
