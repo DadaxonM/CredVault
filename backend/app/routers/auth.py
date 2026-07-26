@@ -155,7 +155,7 @@ def forgot_password(payload: schemas.ForgotPasswordRequest, db: Session = Depend
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Bunday login bilan ro'yxatdan o'tgan superadmin topilmadi.",
         )
-    if not superadmin.telegram_chat_id:
+    if settings.telegram_bot_token and not superadmin.telegram_chat_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Ushbu superadmin hisobi Telegram bilan bog'lanmagan. Administratorga murojaat qiling.",
@@ -173,11 +173,14 @@ def forgot_password(payload: schemas.ForgotPasswordRequest, db: Session = Depend
         f"Login: {superadmin.username}\n"
         f"Mavzu: yangi vaqtinchalik parolingiz: {temp_password}"
     )
-    sent = send_telegram_message(superadmin.telegram_chat_id, text)
+    chat_id = superadmin.telegram_chat_id or "N/A (Telegram sozlanmagan — offline/dev rejim)"
+    sent = send_telegram_message(chat_id, text)
     if not sent:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="Telegram orqali yuborishda xatolik yuz berdi. Birozdan so'ng qayta urinib ko'ring.",
         )
 
-    return {"detail": "Vaqtinchalik parol Telegram orqali yuborildi."}
+    if settings.telegram_bot_token:
+        return {"detail": "Vaqtinchalik parol Telegram orqali yuborildi."}
+    return {"detail": "Telegram sozlanmagan (offline rejim) — vaqtinchalik parol backend konsoliga (logga) chiqarildi."}

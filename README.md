@@ -225,6 +225,28 @@ git pull   # yoki yangi kodni qayta ko'chiring
 docker compose up -d --build
 ```
 
+### Internetsiz (offline/local) muhitga o'tkazish — "Parolni unutdim"
+
+Agar loyihani internetsiz local Docker muhitiga ko'chirsangiz, Telegram API'ga chiqib
+bo'lmaydi. Bunday holatda:
+
+1. `.env` faylida `TELEGRAM_BOT_TOKEN`ni **bo'sh qoldiring** (yozmang yoki `TELEGRAM_BOT_TOKEN=`).
+2. Superadminni Telegram bilan bog'lashning **hojati yo'q** — token bo'sh bo'lsa, tizim buni
+   talab qilmaydi.
+3. Login sahifasida "Parolni unutdim" → login kiritib "Yuborish" bosilsa, yangi vaqtinchalik
+   parol **backend konteyner logiga** chiqadi:
+   ```bash
+   docker compose logs -f backend
+   ```
+   Shunday qatorni qidiring:
+   ```
+   ===== [DEV] TELEGRAM_BOT_TOKEN sozlanmagan — xabar yuborish o'rniga konsolga chiqarildi =====
+   Kimdan: Admin S.
+   Login: superadmin
+   Mavzu: yangi vaqtinchalik parolingiz: xxxxxxxxxx
+   ```
+4. Shu parol bilan tizimga kiring — kirgach yangi parol o'rnatish so'raladi.
+
 ### Loglarni ko'rish / muammoni aniqlash
 
 ```bash
