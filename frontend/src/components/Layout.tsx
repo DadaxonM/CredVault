@@ -2,6 +2,7 @@ import { ReactNode } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { ShieldCheck, Users, KeyRound, LogOut, Lock, TimerReset } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useIdleTimer } from '../context/IdleTimerContext'
 
 const roleLabel: Record<string, string> = {
   superadmin: 'Superadmin',
@@ -83,7 +84,7 @@ export default function Layout({ children }: { children: ReactNode }) {
 }
 
 function IdleCountdown() {
-  const { idleSecondsLeft, idleTimeoutSeconds } = useAuth()
+  const { idleSecondsLeft, idleTimeoutSeconds } = useIdleTimer()
   const pct = Math.max(0, Math.min(100, (idleSecondsLeft / idleTimeoutSeconds) * 100))
   const urgent = idleSecondsLeft <= 10
 

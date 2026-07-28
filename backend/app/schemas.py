@@ -207,6 +207,7 @@ class UserOut(BaseModel):
 
 class ServiceCreate(BaseModel):
     project_name: str
+    url_address: Optional[str] = None
     login: str
     password: str
 
@@ -216,6 +217,14 @@ class ServiceCreate(BaseModel):
         if not v or not v.strip():
             raise ValueError("Bo'sh bo'lishi mumkin emas")
         return v.strip()
+
+    @field_validator("url_address")
+    @classmethod
+    def url_trim(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        v = v.strip()
+        return v or None
 
     @field_validator("password")
     @classmethod
@@ -237,6 +246,7 @@ class AccessGrantOut(BaseModel):
 class ServiceOut(BaseModel):
     id: int
     project_name: str
+    url_address: Optional[str] = None
     login: str
     password: Optional[str] = None  # faqat ko'rish huquqi bo'lganlarga to'ldiriladi
     created_by_id: int

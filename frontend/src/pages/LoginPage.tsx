@@ -71,17 +71,16 @@ export default function LoginPage() {
             </div>
           </div>
           <h1 className="font-display text-4xl font-semibold text-slate-100 leading-tight max-w-md">
-            Rollarga asoslangan kirish huquqlari va parollar seyfi
+            Rollarga asoslangan kirish huquqlari
           </h1>
           <p className="text-slate-400 mt-4 max-w-sm leading-relaxed">
             Superadmin, admin va foydalanuvchilar uchun aniq chegaralangan vakolatlar.
-            Har bir xizmat login-paroli faqat ruxsat berilganlarga ko'rinadi.
           </p>
         </div>
 
         <div className="relative flex gap-6 text-xs text-slate-500">
           <span>© {new Date().getFullYear()} CredVault</span>
-          <span>Superadmin · Admin · User</span>
+          <span></span>
         </div>
       </div>
 
@@ -107,7 +106,7 @@ export default function LoginPage() {
                 <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
                 <input
                   className="input pl-10"
-                  placeholder="superadmin"
+                  placeholder="Foydalanuvchi nomi"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   autoFocus

@@ -55,6 +55,7 @@ def _to_out(service: models.Service, current_user: models.User) -> schemas.Servi
     return schemas.ServiceOut(
         id=service.id,
         project_name=service.project_name,
+        url_address=service.url_address,
         login=service.login,
         password=None,  # copy tugmasi uchun /reveal orqali olinadi
         created_by_id=service.created_by_id,
@@ -95,6 +96,7 @@ def create_service(
 ):
     service = models.Service(
         project_name=payload.project_name,
+        url_address=payload.url_address,
         login=payload.login,
         encrypted_password=encrypt_secret(payload.password),
         created_by_id=current_user.id,
@@ -126,6 +128,7 @@ def update_service(
         raise HTTPException(status_code=403, detail="Faqat o'zingiz yaratgan xizmatni tahrirlashingiz mumkin.")
 
     service.project_name = payload.project_name
+    service.url_address = payload.url_address
     service.login = payload.login
     service.encrypted_password = encrypt_secret(payload.password)
     try:

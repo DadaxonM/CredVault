@@ -1,10 +1,6 @@
-import { createContext, useContext, useEffect, useState, ReactNode, useCallback, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react'
 import api, { TOKEN_KEY } from '../api/client'
 import { RoleName, UserOut } from '../types'
-
-const INACTIVITY_TIMEOUT_SECONDS = 60
-const ACTIVITY_EVENTS = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart', 'click'] as const
 
 interface AuthState {
   isAuthenticated: boolean
@@ -18,8 +14,6 @@ interface AuthState {
   refreshMe: () => Promise<void>
   setMustChangePassword: (v: boolean) => void
   currentUser: UserOut | null
-  idleSecondsLeft: number
-  idleTimeoutSeconds: number
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined)
@@ -32,9 +26,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [fullName, setFullName] = useState<string | null>(null)
   const [mustChangePassword, setMustChangePassword] = useState(false)
   const [currentUser, setCurrentUser] = useState<UserOut | null>(null)
-  const [idleSecondsLeft, setIdleSecondsLeft] = useState(INACTIVITY_TIMEOUT_SECONDS)
-  const lastActivityRef = useRef<number>(Date.now())
-  const navigate = useNavigate()
 
   const refreshMe = useCallback(async () => {
     const res = await api.get<UserOut>('/auth/me')
@@ -77,37 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUserId(null)
     setFullName(null)
     setCurrentUser(null)
-    setIdleSecondsLeft(INACTIVITY_TIMEOUT_SECONDS)
   }, [])
-
-  // Harakatsizlikni kuzatish: 60 soniya davomida hech qanday interaksiya bo'lmasa,
-  // xavfsizlik maqsadida foydalanuvchini avtomatik tizimdan chiqaradi.
-  useEffect(() => {
-    if (!isAuthenticated) return
-
-    lastActivityRef.current = Date.now()
-    setIdleSecondsLeft(INACTIVITY_TIMEOUT_SECONDS)
-
-    const registerActivity = () => {
-      lastActivityRef.current = Date.now()
-    }
-    ACTIVITY_EVENTS.forEach((evt) => window.addEventListener(evt, registerActivity, { passive: true }))
-
-    const interval = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - lastActivityRef.current) / 1000)
-      const remaining = Math.max(0, INACTIVITY_TIMEOUT_SECONDS - elapsed)
-      setIdleSecondsLeft(remaining)
-      if (remaining <= 0) {
-        logout()
-        navigate('/login', { replace: true, state: { idleLogout: true } })
-      }
-    }, 1000)
-
-    return () => {
-      ACTIVITY_EVENTS.forEach((evt) => window.removeEventListener(evt, registerActivity))
-      clearInterval(interval)
-    }
-  }, [isAuthenticated, logout, navigate])
 
   return (
     <AuthContext.Provider
@@ -123,8 +84,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         refreshMe,
         setMustChangePassword,
         currentUser,
-        idleSecondsLeft,
-        idleTimeoutSeconds: INACTIVITY_TIMEOUT_SECONDS,
       }}
     >
       {children}

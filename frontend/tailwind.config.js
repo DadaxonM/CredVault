@@ -29,6 +29,12 @@ export default {
       boxShadow: {
         vault: '0 8px 30px rgba(0,0,0,0.35)',
       },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0', transform: 'translateY(4px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+      },
     },
   },
   plugins: [],

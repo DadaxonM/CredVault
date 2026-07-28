@@ -17,7 +17,7 @@ import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { ServiceOut, UserOut } from '../types'
 
-const emptyForm = { project_name: '', login: '', password: '' }
+const emptyForm = { project_name: '', url_address: '', login: '', password: '' }
 
 export default function ServicesPage() {
   const { role: myRole, userId } = useAuth()
@@ -66,7 +66,7 @@ export default function ServicesPage() {
     setEditService(s)
     setFormError(null)
     ensureRevealed(s.id).then((pwd) => {
-      setForm({ project_name: s.project_name, login: s.login, password: pwd ?? '' })
+      setForm({ project_name: s.project_name, url_address: s.url_address || '', login: s.login, password: pwd ?? '' })
     })
   }
 
@@ -178,6 +178,7 @@ export default function ServicesPage() {
             <thead>
               <tr className="border-b border-white/5 text-left text-xs uppercase tracking-wide text-slate-500">
                 <th className="px-5 py-3.5 font-medium">Project name</th>
+                <th className="px-5 py-3.5 font-medium">URL address</th>
                 <th className="px-5 py-3.5 font-medium">Login</th>
                 <th className="px-5 py-3.5 font-medium">Password</th>
                 <th className="px-5 py-3.5 font-medium">Yaratuvchi</th>
@@ -188,14 +189,14 @@ export default function ServicesPage() {
             <tbody>
               {loading && (
                 <tr>
-                  <td colSpan={6} className="px-5 py-8 text-center text-slate-500">
+                  <td colSpan={7} className="px-5 py-8 text-center text-slate-500">
                     Yuklanmoqda...
                   </td>
                 </tr>
               )}
               {!loading && services.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-5 py-10 text-center text-slate-500">
+                  <td colSpan={7} className="px-5 py-10 text-center text-slate-500">
                     {canCreate
                       ? "Hozircha xizmat yo'q. \"Xizmat qo'shish\" orqali birinchisini yarating."
                       : "Sizga hali hech qanday xizmat ko'rsatilmagan."}
@@ -205,6 +206,20 @@ export default function ServicesPage() {
               {services.map((s) => (
                 <tr key={s.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.02]">
                   <td className="px-5 py-3.5 text-slate-200 font-medium">{s.project_name}</td>
+                  <td className="px-5 py-3.5">
+                    {s.url_address ? (
+                      <a
+                        href={s.url_address}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sky-400 hover:text-sky-300 underline decoration-sky-500/30 text-xs break-all"
+                      >
+                        {s.url_address}
+                      </a>
+                    ) : (
+                      <span className="text-slate-600 text-xs">—</span>
+                    )}
+                  </td>
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-1.5">
                       <span className="font-mono text-slate-300">{s.login}</span>
@@ -363,6 +378,15 @@ function ServiceForm({
           value={form.project_name}
           onChange={(e) => setForm({ ...form, project_name: e.target.value })}
           required
+        />
+      </div>
+      <div>
+        <label className="label">URL address <span className="text-slate-600 normal-case">(ixtiyoriy)</span></label>
+        <input
+          className="input"
+          placeholder="https://example.com"
+          value={form.url_address}
+          onChange={(e) => setForm({ ...form, url_address: e.target.value })}
         />
       </div>
       <div>

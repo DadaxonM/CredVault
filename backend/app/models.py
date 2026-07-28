@@ -67,6 +67,7 @@ class Service(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     project_name = Column(String(200), nullable=False, index=True)
+    url_address = Column(String(500), nullable=True)
     login = Column(String(200), nullable=False)
     encrypted_password = Column(String(500), nullable=False)
 

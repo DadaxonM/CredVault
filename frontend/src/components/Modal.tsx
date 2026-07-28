@@ -1,4 +1,4 @@
-import { ReactNode, useEffect } from 'react'
+import { ReactNode, useEffect, useRef } from 'react'
 
 interface ModalProps {
   title: string
@@ -9,13 +9,16 @@ interface ModalProps {
 }
 
 export default function Modal({ title, subtitle, onClose, children, width = 'max-w-lg' }: ModalProps) {
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') onCloseRef.current()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
+  }, [])
 
   return (
     <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 overflow-y-auto">

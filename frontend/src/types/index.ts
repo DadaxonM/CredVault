@@ -31,6 +31,7 @@ export interface AccessGrant {
 export interface ServiceOut {
   id: number
   project_name: string
+  url_address?: string | null
   login: string
   password: string | null
   created_by_id: number

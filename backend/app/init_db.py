@@ -1,11 +1,35 @@
+from sqlalchemy import inspect, text
+
 from app import models
 from app.config import settings
 from app.database import Base, engine, SessionLocal
 from app.security import hash_password
 
 
+def _run_light_migrations():
+    """Alembic ishlatmasdan, mavjud jadvallarga yetishmayotgan ustunlarni avtomatik qo'shadi.
+    Bu — allaqachon ma'lumot bilan ishlab turgan bazalar uchun (masalan production'dagi Docker
+    konteyner) xavfsiz: faqat YETISHMAYOTGAN ustunlarni qo'shadi, mavjud ma'lumotga tegmaydi."""
+    inspector = inspect(engine)
+    existing_tables = set(inspector.get_table_names())
+
+    with engine.begin() as conn:
+        for table in Base.metadata.sorted_tables:
+            if table.name not in existing_tables:
+                continue  # yangi jadval - create_all() allaqachon to'liq holda yaratadi
+            existing_columns = {c["name"] for c in inspector.get_columns(table.name)}
+            for column in table.columns:
+                if column.name in existing_columns:
+                    continue
+                col_type = column.type.compile(engine.dialect)
+                nullable = "" if column.nullable else ""  # yangi ustun har doim NULL bo'lishi kerak (eski qatorlar uchun)
+                conn.execute(text(f'ALTER TABLE {table.name} ADD COLUMN {column.name} {col_type}'))
+                print(f"[init_db] Migratsiya: '{table.name}.{column.name}' ustuni qo'shildi.")
+
+
 def init_db():
     Base.metadata.create_all(bind=engine)
+    _run_light_migrations()
     db = SessionLocal()
     try:
         # 1) Rollarni seed qilish
