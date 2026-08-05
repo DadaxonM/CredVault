@@ -48,6 +48,10 @@ class User(Base):
     must_change_password = Column(Boolean, default=True, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)  # False -> disabled
 
+    # ---- Brute-force / account lockout ----
+    failed_login_attempts = Column(Integer, default=0, nullable=False)  # ketma-ket noto'g'ri urinishlar
+    locked_until = Column(DateTime, nullable=True)                      # shu vaqtgacha hisob bloklangan (UTC)
+
     telegram_chat_id = Column(String(64), unique=True, nullable=True)
     telegram_username = Column(String(100), nullable=True)
 

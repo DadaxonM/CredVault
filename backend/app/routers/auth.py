@@ -1,7 +1,8 @@
 import secrets
 import string
+from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -9,6 +10,7 @@ from app import models, schemas
 from app.config import settings
 from app.database import get_db
 from app.deps import get_current_user, require_roles
+from app.ratelimit import limiter
 from app.telegram_utils import send_telegram_message, get_latest_start_chat
 from app.security import create_access_token, verify_password, hash_password
 
@@ -22,22 +24,53 @@ def telegram_bot_info():
 
 
 @router.post("/login", response_model=schemas.TokenResponse)
-def login(payload: schemas.LoginRequest, db: Session = Depends(get_db)):
-    user = (
-        db.query(models.User)
-        .filter(models.User.username == payload.username.strip().lower())
-        .first()
-    )
+@limiter.limit(settings.login_rate_limit)
+def login(request: Request, payload: schemas.LoginRequest, db: Session = Depends(get_db)):
+    username = payload.username.strip().lower()
+    user = db.query(models.User).filter(models.User.username == username).first()
+
+    now = datetime.utcnow()
+
+    # 1) Hisob ketma-ket noto'g'ri urinishlardan so'ng vaqtincha bloklanganmi?
+    if user and user.locked_until and user.locked_until > now:
+        remaining_min = int((user.locked_until - now).total_seconds() // 60) + 1
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=(
+                f"Ko'p marta noto'g'ri urinish sababli hisob vaqtincha bloklandi. "
+                f"Iltimos, ~{remaining_min} daqiqadan so'ng qayta urinib ko'ring."
+            ),
+        )
+
+    # 2) Login yoki parol noto'g'ri bo'lsa — hisoblagichni oshiramiz va kerak bo'lsa bloklaymiz.
     if not user or not verify_password(payload.password, user.hashed_password):
+        if user:
+            attempts = (user.failed_login_attempts or 0) + 1
+            if attempts >= settings.max_failed_attempts:
+                # Chegaraga yetdi — hisobni bloklaymiz va hisoblagichni nolga qaytaramiz.
+                user.locked_until = now + timedelta(minutes=settings.lockout_minutes)
+                user.failed_login_attempts = 0
+            else:
+                user.failed_login_attempts = attempts
+            db.commit()
+        # Xabar ataylab umumiy — qaysi biri (login/parol) xato ekani oshkor qilinmaydi.
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Login yoki parol noto'g'ri.",
         )
+
+    # 3) Hisob disabled qilinganmi?
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Ushbu hisob faolsizlantirilgan (disabled). Administratorga murojaat qiling.",
         )
+
+    # 4) Muvaffaqiyatli kirish — himoya hisoblagichlarini tozalaymiz.
+    if (user.failed_login_attempts or 0) != 0 or user.locked_until is not None:
+        user.failed_login_attempts = 0
+        user.locked_until = None
+        db.commit()
 
     token = create_access_token({"sub": str(user.id)})
     return schemas.TokenResponse(
@@ -135,7 +168,12 @@ def link_telegram(
 
 
 @router.post("/forgot-password")
-def forgot_password(payload: schemas.ForgotPasswordRequest, db: Session = Depends(get_db)):
+@limiter.limit(settings.forgot_password_rate_limit)
+def forgot_password(
+    request: Request,
+    payload: schemas.ForgotPasswordRequest,
+    db: Session = Depends(get_db),
+):
     """Login sahifasidagi 'Parolni unutdim'. Faqat superadminning login (username)i to'g'ri
     kiritilsa va u Telegram orqali bog'langan bo'lsa ishlaydi.
 
@@ -165,6 +203,9 @@ def forgot_password(payload: schemas.ForgotPasswordRequest, db: Session = Depend
     temp_password = "".join(secrets.choice(alphabet) for _ in range(10)) + "!A1"
     superadmin.hashed_password = hash_password(temp_password)
     superadmin.must_change_password = True
+    # Yangi vaqtinchalik parol berilganda hisobni blokdan chiqaramiz.
+    superadmin.failed_login_attempts = 0
+    superadmin.locked_until = None
     db.commit()
 
     initials = f"{superadmin.first_name[:1]}.{superadmin.father_name[:1]}."

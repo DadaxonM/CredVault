@@ -1,10 +1,27 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from slowapi.errors import RateLimitExceeded
 
 from app.init_db import init_db
+from app.ratelimit import limiter
 from app.routers import auth, users, services
 
 app = FastAPI(title="CredVault API", version="1.0.0")
+
+# ---- Rate limiting (slowapi) ----
+app.state.limiter = limiter
+
+
+@app.exception_handler(RateLimitExceeded)
+def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=429,
+        content={
+            "detail": "Juda ko'p urinish. Iltimos, birozdan so'ng qayta urinib ko'ring."
+        },
+    )
+
 
 app.add_middleware(
     CORSMiddleware,

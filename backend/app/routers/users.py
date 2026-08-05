@@ -170,6 +170,10 @@ def toggle_active(
         raise HTTPException(status_code=400, detail="O'zingizni disable qila olmaysiz.")
 
     target.is_active = not target.is_active
+    if target.is_active:
+        # Qayta faollashtirilganda hisobni blokdan ham chiqaramiz.
+        target.failed_login_attempts = 0
+        target.locked_until = None
     db.commit()
     db.refresh(target)
     return target
@@ -190,5 +194,8 @@ def reset_password(
     temp_password = "".join(secrets.choice(alphabet) for _ in range(10)) + "!A1"
     target.hashed_password = hash_password(temp_password)
     target.must_change_password = True
+    # Parol tiklanganda hisobni blokdan chiqaramiz (admin qutqarish yo'li).
+    target.failed_login_attempts = 0
+    target.locked_until = None
     db.commit()
     return {"detail": "Vaqtinchalik parol yaratildi.", "temp_password": temp_password}

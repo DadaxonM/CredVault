@@ -13,6 +13,14 @@ class Settings(BaseSettings):
 
     inactivity_timeout_seconds: int = 60
 
+    # ---- Brute-force himoyasi ----
+    # Rate limiting (slowapi) — IP bo'yicha login/forgot-password so'rovlari cheklovi.
+    login_rate_limit: str = "5/minute"
+    forgot_password_rate_limit: str = "3/hour"
+    # Account lockout — ketma-ket noto'g'ri urinishlardan keyin hisobni vaqtincha bloklash.
+    max_failed_attempts: int = 5
+    lockout_minutes: int = 15
+
     telegram_bot_token: str = ""
     telegram_bot_username: str = ""
 

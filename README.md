@@ -55,6 +55,16 @@ project/
   yuboriladi va tizimga kirgach uni almashtirish majburiy bo'ladi. Mos kelmasa — xatolik ko'rsatiladi.
   > **Eslatma:** parollar bazada bir tomonlama (bcrypt) xeshlanadi, shu sababli "eski" parolni
   > tiklab bo'lmaydi — shuning uchun har doim yangi vaqtinchalik parol yaratiladi.
+- **Brute-force (parol perebor) himoyasi:** Login endpointi ikki qatlamli himoyaga ega:
+  - **Rate limiting** — bitta IP manzildan login so'rovlari cheklanadi (standart `5/minute`;
+    "Parolni unutdim" uchun `3/hour`). Ilova darajasida `slowapi`, undan tashqari nginx
+    darajasida ham qo'shimcha cheklov bor. Haqiqiy IP nginx'ning `X-Real-IP` sarlavhasidan
+    olinadi (soxtalashtirishga chidamli).
+  - **Account lockout** — ketma-ket **5 marta** (sozlanadi) noto'g'ri urinishdan so'ng hisob
+    **15 daqiqaga** (sozlanadi) vaqtincha bloklanadi; muvaffaqiyatli kirish hisoblagichni
+    nolga qaytaradi. Admin bloklangan foydalanuvchini parol tiklash yoki qayta faollashtirish
+    orqali darhol blokdan chiqara oladi. Sozlamalar `.env` orqali boshqariladi
+    (`LOGIN_RATE_LIMIT`, `FORGOT_PASSWORD_RATE_LIMIT`, `MAX_FAILED_ATTEMPTS`, `LOCKOUT_MINUTES`).
 
 ---
 
