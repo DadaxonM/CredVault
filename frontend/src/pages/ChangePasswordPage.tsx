@@ -272,8 +272,8 @@ export default function ChangePasswordPage() {
 
   if (mustChangePassword) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-ink-950">
-        <div className="card w-full max-w-md p-8">
+      <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-ink-950">
+        <div className="card w-full max-w-md p-6 sm:p-8">
           <div className="w-12 h-12 rounded-2xl bg-brass-500/15 border border-brass-500/30 flex items-center justify-center mb-5">
             <ShieldAlert size={22} className="text-brass-400" />
           </div>

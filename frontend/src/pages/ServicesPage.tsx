@@ -172,7 +172,8 @@ export default function ServicesPage() {
         )}
       </div>
 
-      <div className="card overflow-hidden">
+      {/* Desktop: jadval ko'rinishi */}
+      <div className="card overflow-hidden hidden lg:block">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -292,6 +293,113 @@ export default function ServicesPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Mobil / planshet: karta ko'rinishi */}
+      <div className="lg:hidden">
+        {loading && (
+          <div className="card px-5 py-8 text-center text-slate-500">Yuklanmoqda...</div>
+        )}
+        {!loading && services.length === 0 && (
+          <div className="card px-5 py-10 text-center text-slate-500">
+            {canCreate
+              ? "Hozircha xizmat yo'q. \"Xizmat qo'shish\" orqali birinchisini yarating."
+              : "Sizga hali hech qanday xizmat ko'rsatilmagan."}
+          </div>
+        )}
+        <div className="space-y-3">
+          {services.map((s) => (
+            <div key={s.id} className="card p-4 flex flex-col gap-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-slate-200 font-medium break-words">{s.project_name}</div>
+                  {s.created_by_name && (
+                    <div className="text-xs text-slate-500 mt-0.5">Yaratuvchi: {s.created_by_name}</div>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  {isSuperadmin && (
+                    <button
+                      title="Ko'rish huquqini belgilash"
+                      className="btn-ghost !p-2"
+                      onClick={() => setAccessService(s)}
+                    >
+                      <Settings2 size={16} />
+                    </button>
+                  )}
+                  {canEditDelete(s) && (
+                    <>
+                      <button title="Tahrirlash" className="btn-ghost !p-2" onClick={() => openEdit(s)}>
+                        <Pencil size={16} />
+                      </button>
+                      <button
+                        title="O'chirish"
+                        className="btn-ghost !p-2 text-rose-400"
+                        onClick={() => handleDelete(s)}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {s.url_address && (
+                <a
+                  href={s.url_address}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sky-400 hover:text-sky-300 underline decoration-sky-500/30 text-xs break-all"
+                >
+                  {s.url_address}
+                </a>
+              )}
+
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-500 w-20 shrink-0">Login</span>
+                  <span className="font-mono text-slate-300 break-all flex-1 min-w-0">{s.login}</span>
+                  <button
+                    title="Loginni nusxalash"
+                    className="btn-ghost !p-1.5 shrink-0"
+                    onClick={() => copyText(s.login, 'Login')}
+                  >
+                    <Copy size={14} />
+                  </button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-500 w-20 shrink-0">Parol</span>
+                  <span className="font-mono text-slate-300 break-all flex-1 min-w-0">
+                    {visible[s.id] ? revealed[s.id] : '••••••••'}
+                  </span>
+                  <button
+                    title={visible[s.id] ? 'Yashirish' : "Ko'rsatish"}
+                    className="btn-ghost !p-1.5 shrink-0"
+                    onClick={() => toggleVisible(s.id)}
+                    disabled={revealing[s.id]}
+                  >
+                    {visible[s.id] ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                  <button
+                    title="Parolni nusxalash"
+                    className="btn-ghost !p-1.5 shrink-0"
+                    onClick={() => copyPassword(s.id)}
+                    disabled={revealing[s.id]}
+                  >
+                    <Copy size={14} />
+                  </button>
+                </div>
+              </div>
+
+              {isSuperadmin && (
+                <div className="pt-1 border-t border-white/5">
+                  <p className="text-xs text-slate-500 mb-1.5">Ko'rish huquqi</p>
+                  <AccessSummary service={s} />
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       </div>
 
@@ -497,7 +605,7 @@ function AccessModal({
 
           <div>
             <p className="text-sm font-medium text-slate-300 mb-2.5">Rol bo'yicha</p>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
               <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
                 <input type="checkbox" className="accent-brass-500" checked={allAdmins} onChange={(e) => setAllAdmins(e.target.checked)} />
                 Barcha adminlar
@@ -509,7 +617,7 @@ function AccessModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
             <div>
               <p className="text-sm font-medium text-slate-300 mb-2.5">Aniq adminlar</p>
               <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1">

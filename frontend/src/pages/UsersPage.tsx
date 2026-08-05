@@ -217,7 +217,8 @@ export default function UsersPage() {
         </div>
       )}
 
-      <div className="card overflow-hidden">
+      {/* Desktop: jadval ko'rinishi */}
+      <div className="card overflow-hidden hidden lg:block">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -290,6 +291,76 @@ export default function UsersPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Mobil / planshet: karta ko'rinishi */}
+      <div className="lg:hidden">
+        {loading && (
+          <div className="card px-5 py-8 text-center text-slate-500">Yuklanmoqda...</div>
+        )}
+        {!loading && filteredUsers.length === 0 && (
+          <div className="card px-5 py-10 text-center text-slate-500">
+            Hozircha hech kim yo'q. "{activeRole === 'admin' ? "Admin qo'shish" : "Foydalanuvchi qo'shish"}" tugmasi orqali birinchisini yarating.
+          </div>
+        )}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {filteredUsers.map((u) => (
+            <div key={u.id} className="card p-4 flex flex-col gap-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-slate-200 font-medium truncate">
+                    {u.last_name} {u.first_name}
+                  </div>
+                  {u.father_name && <div className="text-xs text-slate-500 truncate">{u.father_name}</div>}
+                </div>
+                <div className="shrink-0">
+                  {u.is_active ? (
+                    <span className="badge-admin">Faol</span>
+                  ) : (
+                    <span className="badge-off">Disabled</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-1.5 text-sm">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-xs text-slate-500 w-16 shrink-0">Login</span>
+                  <span className="font-mono text-slate-300 break-all">{u.username}</span>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-xs text-slate-500 w-16 shrink-0">Email</span>
+                  <span className="text-slate-400 break-all">{u.email}</span>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-xs text-slate-500 w-16 shrink-0">Telefon</span>
+                  <span className="text-slate-400 font-mono text-xs break-all">{u.phone}</span>
+                </div>
+                {u.must_change_password && (
+                  <div className="text-[11px] text-slate-500">· parol kutilmoqda</div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-1 pt-1 border-t border-white/5">
+                <button title="Tahrirlash" className="btn-ghost !p-2" onClick={() => openEdit(u)}>
+                  <Pencil size={16} />
+                </button>
+                <button title="Parolni tiklash" className="btn-ghost !p-2" onClick={() => handleResetPassword(u)}>
+                  <KeyRound size={16} />
+                </button>
+                <button
+                  title={u.is_active ? 'Disable qilish' : 'Faollashtirish'}
+                  className="btn-ghost !p-2"
+                  onClick={() => handleToggleActive(u)}
+                >
+                  {u.is_active ? <Ban size={16} className="text-amber-400" /> : <CheckCircle2 size={16} className="text-mint-400" />}
+                </button>
+                <button title="O'chirish" className="btn-ghost !p-2 text-rose-400 ml-auto" onClick={() => handleDelete(u)}>
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -375,7 +446,7 @@ function UserForm({
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="label">Ismi</label>
           <input className="input" value={form.first_name} onChange={set('first_name')} required />
