@@ -17,6 +17,22 @@ from app.security import create_access_token, verify_password, hash_password
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
+def _verify_forgot_secret(secret_phrase: str) -> None:
+    """Kalit so'zni .env'dagi FORGOT_PASSWORD_SECRET bilan tekshiradi.
+    Bo'sh sozlangan bo'lsa — tekshiruv o'tkazilmaydi (orqaga mos)."""
+    if not settings.forgot_password_secret:
+        return
+    import hmac
+    if not hmac.compare_digest(
+        (secret_phrase or "").strip(),
+        settings.forgot_password_secret,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Kalit so'z noto'g'ri.",
+        )
+
+
 @router.get("/telegram/bot-info")
 def telegram_bot_info():
     """Ochiq endpoint — botga o'tish havolasi uchun faqat username qaytaradi."""
@@ -167,6 +183,19 @@ def link_telegram(
     return current_user
 
 
+@router.post("/forgot-password/verify-secret")
+@limiter.limit(settings.login_rate_limit)
+def verify_forgot_secret(
+    request: Request,
+    payload: schemas.VerifySecretRequest,
+):
+    """'Parolni unutdim' oynasidagi 1-qadam: kalit so'zni tekshiradi.
+    To'g'ri bo'lsa {ok: true}; noto'g'ri bo'lsa 403. Bu — foydalanuvchi username
+    bosqichiga o'tishidan oldingi darvoza."""
+    _verify_forgot_secret(payload.secret_phrase)
+    return {"ok": True}
+
+
 @router.post("/forgot-password")
 @limiter.limit(settings.forgot_password_rate_limit)
 def forgot_password(
@@ -182,16 +211,7 @@ def forgot_password(
     yuboriladi va tizimga kirgach uni almashtirish majburiy qilinadi.
     """
     # ---- Kalit so'z tekshiruvi (.env'dan FORGOT_PASSWORD_SECRET) ----
-    if settings.forgot_password_secret:
-        import hmac
-        if not hmac.compare_digest(
-            payload.secret_phrase.strip(),
-            settings.forgot_password_secret,
-        ):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Kalit so'z noto'g'ri.",
-            )
+    _verify_forgot_secret(payload.secret_phrase)
 
     superadmin = (
         db.query(models.User)

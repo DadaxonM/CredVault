@@ -171,6 +171,7 @@ export default function LoginPage() {
 function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
   const [secretPhrase, setSecretPhrase] = useState('')
   const [secretVerified, setSecretVerified] = useState(false)
+  const [verifying, setVerifying] = useState(false)
   const [username, setUsername] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -178,6 +179,22 @@ function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
   const toast = useToast()
 
   const isValid = USERNAME_RE.test(username.trim())
+
+  const handleVerifySecret = async () => {
+    if (!secretPhrase.trim()) return
+    setError(null)
+    setVerifying(true)
+    try {
+      await api.post('/auth/forgot-password/verify-secret', {
+        secret_phrase: secretPhrase.trim(),
+      })
+      setSecretVerified(true)
+    } catch (err) {
+      setError(extractErrorMessage(err))
+    } finally {
+      setVerifying(false)
+    }
+  }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -237,11 +254,11 @@ function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
 
           <button
             type="button"
-            disabled={!secretPhrase.trim()}
+            disabled={!secretPhrase.trim() || verifying}
             className="btn-primary w-full"
-            onClick={() => { setError(null); setSecretVerified(true) }}
+            onClick={handleVerifySecret}
           >
-            Davom etish
+            {verifying ? 'Tekshirilmoqda...' : 'Davom etish'}
           </button>
         </div>
       ) : success ? (

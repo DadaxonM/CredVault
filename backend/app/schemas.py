@@ -110,6 +110,11 @@ class ForgotPasswordRequest(BaseModel):
         return v
 
 
+class VerifySecretRequest(BaseModel):
+    """'Parolni unutdim' oynasidagi kalit so'z tekshiruvi uchun."""
+    secret_phrase: str = ""
+
+
 class TelegramLinkRequest(BaseModel):
     chat_id: str
     telegram_username: Optional[str] = None
