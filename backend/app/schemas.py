@@ -99,6 +99,7 @@ class UpdateEmailRequest(GmailEmailMixin):
 class ForgotPasswordRequest(BaseModel):
     """Login sahifasidagi 'Parolni unutdim' oynasi uchun — superadmin login (username) orqali."""
     username: str
+    secret_phrase: str = ""
 
     @field_validator("username")
     @classmethod

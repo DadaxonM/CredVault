@@ -169,6 +169,8 @@ export default function LoginPage() {
 }
 
 function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
+  const [secretPhrase, setSecretPhrase] = useState('')
+  const [secretVerified, setSecretVerified] = useState(false)
   const [username, setUsername] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -183,7 +185,10 @@ function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
     setError(null)
     setLoading(true)
     try {
-      await api.post('/auth/forgot-password', { username: username.trim().toLowerCase() })
+      await api.post('/auth/forgot-password', {
+        username: username.trim().toLowerCase(),
+        secret_phrase: secretPhrase.trim(),
+      })
       setSuccess(true)
       toast.show('Vaqtinchalik parol Telegram orqali yuborildi.', 'success')
     } catch (err) {
@@ -196,10 +201,50 @@ function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
   return (
     <Modal
       title="Parolni unutdim"
-      subtitle="Faqat superadmin login (username)i qabul qilinadi"
+      subtitle={
+        secretVerified
+          ? "Faqat superadmin login (username)i qabul qilinadi"
+          : "Davom etish uchun kalit so'zni kiriting"
+      }
       onClose={onClose}
     >
-      {success ? (
+      {!secretVerified ? (
+        <div className="space-y-4">
+          <div>
+            <label className="label">Kalit so'z</label>
+            <div className="relative">
+              <KeyRound size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+              <input
+                type="password"
+                className="input pl-10"
+                placeholder="Kalit so'zni kiriting"
+                value={secretPhrase}
+                onChange={(e) => { setSecretPhrase(e.target.value); setError(null) }}
+                autoFocus
+                required
+              />
+            </div>
+            <p className="text-xs text-slate-500 mt-1.5">
+              Bu funksiyaga kirish uchun maxsus kalit so'z talab qilinadi.
+            </p>
+          </div>
+
+          {error && (
+            <div className="text-sm text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg px-3.5 py-2.5">
+              {error}
+            </div>
+          )}
+
+          <button
+            type="button"
+            disabled={!secretPhrase.trim()}
+            className="btn-primary w-full"
+            onClick={() => { setError(null); setSecretVerified(true) }}
+          >
+            Davom etish
+          </button>
+        </div>
+      ) : success ? (
         <div className="space-y-4">
           <div className="flex items-start gap-3 bg-mint-500/10 border border-mint-500/25 rounded-lg px-4 py-3.5">
             <ShieldCheck size={18} className="text-mint-400 shrink-0 mt-0.5" />

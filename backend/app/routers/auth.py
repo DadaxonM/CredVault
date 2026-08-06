@@ -181,6 +181,18 @@ def forgot_password(
     tiklab bo'lmaydi — buning o'rniga yangi vaqtinchalik parol yaratilib, Telegram orqali
     yuboriladi va tizimga kirgach uni almashtirish majburiy qilinadi.
     """
+    # ---- Kalit so'z tekshiruvi (.env'dan FORGOT_PASSWORD_SECRET) ----
+    if settings.forgot_password_secret:
+        import hmac
+        if not hmac.compare_digest(
+            payload.secret_phrase.strip(),
+            settings.forgot_password_secret,
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Kalit so'z noto'g'ri.",
+            )
+
     superadmin = (
         db.query(models.User)
         .join(models.Role)

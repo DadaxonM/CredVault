@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     # Rate limiting (slowapi) — IP bo'yicha login/forgot-password so'rovlari cheklovi.
     login_rate_limit: str = "5/minute"
     forgot_password_rate_limit: str = "3/hour"
+    # "Parolni unutdim" funksiyasiga kirish uchun kalit so'z (bo'sh bo'lsa tekshirilmaydi).
+    forgot_password_secret: str = ""
     # Account lockout — ketma-ket noto'g'ri urinishlardan keyin hisobni vaqtincha bloklash.
     max_failed_attempts: int = 5
     lockout_minutes: int = 15
