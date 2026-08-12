@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   KeyRound,
   Plus,
@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import Layout from '../components/Layout'
 import Modal from '../components/Modal'
+import SearchInput from '../components/SearchInput'
 import api, { extractErrorMessage } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
@@ -26,6 +27,7 @@ export default function ServicesPage() {
   const isSuperadmin = myRole === 'superadmin'
 
   const [services, setServices] = useState<ServiceOut[]>([])
+  const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(true)
 
   const [createOpen, setCreateOpen] = useState(false)
@@ -148,6 +150,18 @@ export default function ServicesPage() {
 
   const canEditDelete = (s: ServiceOut) => isSuperadmin || s.created_by_id === userId
 
+  const filteredServices = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return services
+    return services.filter((s) => (s.project_name || '').toLowerCase().includes(q))
+  }, [services, query])
+
+  const emptyMessage = query.trim()
+    ? `"${query.trim()}" bo'yicha hech narsa topilmadi.`
+    : canCreate
+      ? "Hozircha xizmat yo'q. \"Xizmat qo'shish\" orqali birinchisini yarating."
+      : "Sizga hali hech qanday xizmat ko'rsatilmagan."
+
   return (
     <Layout>
       <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
@@ -170,6 +184,16 @@ export default function ServicesPage() {
             Xizmat qo'shish
           </button>
         )}
+      </div>
+
+      {/* Qidiruv — project name bo'yicha */}
+      <div className="mb-4">
+        <SearchInput
+          value={query}
+          onChange={setQuery}
+          placeholder="Project name bo'yicha qidirish..."
+          className="w-full sm:max-w-sm"
+        />
       </div>
 
       {/* Desktop: jadval ko'rinishi */}
@@ -195,16 +219,14 @@ export default function ServicesPage() {
                   </td>
                 </tr>
               )}
-              {!loading && services.length === 0 && (
+              {!loading && filteredServices.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-5 py-10 text-center text-slate-500">
-                    {canCreate
-                      ? "Hozircha xizmat yo'q. \"Xizmat qo'shish\" orqali birinchisini yarating."
-                      : "Sizga hali hech qanday xizmat ko'rsatilmagan."}
+                    {emptyMessage}
                   </td>
                 </tr>
               )}
-              {services.map((s) => (
+              {filteredServices.map((s) => (
                 <tr key={s.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.02]">
                   <td className="px-5 py-3.5 text-slate-200 font-medium">{s.project_name}</td>
                   <td className="px-5 py-3.5">
@@ -301,15 +323,13 @@ export default function ServicesPage() {
         {loading && (
           <div className="card px-5 py-8 text-center text-slate-500">Yuklanmoqda...</div>
         )}
-        {!loading && services.length === 0 && (
+        {!loading && filteredServices.length === 0 && (
           <div className="card px-5 py-10 text-center text-slate-500">
-            {canCreate
-              ? "Hozircha xizmat yo'q. \"Xizmat qo'shish\" orqali birinchisini yarating."
-              : "Sizga hali hech qanday xizmat ko'rsatilmagan."}
+            {emptyMessage}
           </div>
         )}
         <div className="space-y-3">
-          {services.map((s) => (
+          {filteredServices.map((s) => (
             <div key={s.id} className="card p-4 flex flex-col gap-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">

@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import Layout from '../components/Layout'
 import Modal from '../components/Modal'
+import SearchInput from '../components/SearchInput'
 import api, { extractErrorMessage } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
@@ -32,6 +33,7 @@ export default function UsersPage() {
   const isSuperadmin = myRole === 'superadmin'
 
   const [tab, setTab] = useState<RoleName>('user')
+  const [query, setQuery] = useState('')
   const [users, setUsers] = useState<UserOut[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -62,10 +64,20 @@ export default function UsersPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeRole])
 
-  const filteredUsers = useMemo(
-    () => users.filter((u) => u.role.name === activeRole),
-    [users, activeRole],
-  )
+  const filteredUsers = useMemo(() => {
+    const byRole = users.filter((u) => u.role.name === activeRole)
+    const q = query.trim().toLowerCase()
+    if (!q) return byRole
+    return byRole.filter((u) => {
+      const fio = `${u.last_name} ${u.first_name} ${u.father_name}`.toLowerCase()
+      const email = (u.email || '').toLowerCase()
+      return fio.includes(q) || email.includes(q)
+    })
+  }, [users, activeRole, query])
+
+  const emptyMessage = query.trim()
+    ? `"${query.trim()}" bo'yicha hech narsa topilmadi.`
+    : `Hozircha hech kim yo'q. "${activeRole === 'admin' ? "Admin qo'shish" : "Foydalanuvchi qo'shish"}" tugmasi orqali birinchisini yarating.`
 
   const openCreate = () => {
     setForm(emptyForm)
@@ -202,7 +214,7 @@ export default function UsersPage() {
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               tab === 'admin' ? 'bg-brass-500/15 text-brass-400' : 'text-slate-400 hover:text-slate-200'
             }`}
-            onClick={() => setTab('admin')}
+            onClick={() => { setTab('admin'); setQuery('') }}
           >
             Adminlar
           </button>
@@ -210,12 +222,22 @@ export default function UsersPage() {
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               tab === 'user' ? 'bg-brass-500/15 text-brass-400' : 'text-slate-400 hover:text-slate-200'
             }`}
-            onClick={() => setTab('user')}
+            onClick={() => { setTab('user'); setQuery('') }}
           >
             Foydalanuvchilar
           </button>
         </div>
       )}
+
+      {/* Qidiruv — F.I.O yoki email bo'yicha (joriy tab doirasida) */}
+      <div className="mb-4">
+        <SearchInput
+          value={query}
+          onChange={setQuery}
+          placeholder="F.I.O yoki email bo'yicha qidirish..."
+          className="w-full sm:max-w-sm"
+        />
+      </div>
 
       {/* Desktop: jadval ko'rinishi */}
       <div className="card overflow-hidden hidden lg:block">
@@ -242,7 +264,7 @@ export default function UsersPage() {
               {!loading && filteredUsers.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-5 py-10 text-center text-slate-500">
-                    Hozircha hech kim yo'q. "{activeRole === 'admin' ? "Admin qo'shish" : "Foydalanuvchi qo'shish"}" tugmasi orqali birinchisini yarating.
+                    {emptyMessage}
                   </td>
                 </tr>
               )}
@@ -301,7 +323,7 @@ export default function UsersPage() {
         )}
         {!loading && filteredUsers.length === 0 && (
           <div className="card px-5 py-10 text-center text-slate-500">
-            Hozircha hech kim yo'q. "{activeRole === 'admin' ? "Admin qo'shish" : "Foydalanuvchi qo'shish"}" tugmasi orqali birinchisini yarating.
+            {emptyMessage}
           </div>
         )}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
