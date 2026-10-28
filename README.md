@@ -83,8 +83,8 @@ uvicorn app.main:app --reload --port 8000
 Birinchi marta ishga tushganda backend avtomatik ravishda:
 - 3 ta rolni (`superadmin`, `admin`, `user`) yaratadi,
 - default superadmin hisobini yaratadi:
-  - **login:** `superadmin`
-  - **parol:** `Passwords1807*`
+  - **login:** `xxxxxxxxxx`
+  - **parol:** `xxxxxxxxxx*`
   - `must_change_password = true` — birinchi kirishda parolni o'zgartirish **majburiy**.
 
 `.env` faylida:
